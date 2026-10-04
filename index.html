@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FBF6F2">
+<title>恋爱脑程度测试</title>
+<style>
+@property --p { syntax: '<number>'; inherits: false; initial-value: 0; }
+
+:root{
+  --cream:#FBF6F2;
+  --ink:#2E2523;
+  --muted:#9C8D88;
+  --rose:#D98C93;
+  --rose-deep:#B4656F;
+  --gold:#C9A66B;
+  --card:rgba(255,255,255,.72);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;margin:0;padding:0;}
+body{
+  position:fixed;inset:0;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  color:var(--ink);
+  background:var(--cream);
+  -webkit-font-smoothing:antialiased;
+  -webkit-user-select:none;user-select:none;
+  overscroll-behavior:none;
+  touch-action:manipulation;
+}
+
+.orb{position:fixed;border-radius:50%;filter:blur(70px);pointer-events:none;z-index:0;}
+.orb-1{width:320px;height:320px;top:-140px;left:-110px;background:radial-gradient(circle,#F2C4C4,transparent 70%);opacity:.75;}
+.orb-2{width:300px;height:300px;bottom:-130px;right:-100px;background:radial-gradient(circle,#EFD9B8,transparent 70%);opacity:.7;}
+.orb-3{width:260px;height:260px;bottom:22%;left:-140px;background:radial-gradient(circle,#F6DCE0,transparent 70%);opacity:.55;}
+
+.app{position:absolute;inset:0;z-index:1;}
+
+.screen{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top,0px) + 30px) 26px calc(env(safe-area-inset-bottom,0px) + 26px);
+  opacity:0;pointer-events:none;
+  transform:translateY(16px) scale(.995);
+  transition:opacity .5s var(--ease), transform .5s var(--ease);
+}
+.screen.active{opacity:1;pointer-events:auto;transform:none;}
+
+.eyebrow{
+  font-size:11px;letter-spacing:.34em;color:var(--muted);
+  font-weight:500;text-transform:uppercase;
+}
+.hairline{
+  width:40px;height:1px;margin:22px 0;
+  background:linear-gradient(90deg,var(--rose),var(--gold));
+  opacity:.8;
+}
+
+.intro-top{flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:24px;}
+.intro-title{
+  font-family:"Songti SC","STSong","Noto Serif SC",Georgia,serif;
+  font-size:clamp(34px,11.5vw,46px);
+  line-height:1.32;font-weight:600;letter-spacing:.02em;
+  margin:18px 0 0;
+}
+.intro-title em{
+  font-style:normal;
+  background:linear-gradient(100deg,#B4656F 10%,#C9A66B 90%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+}
+.intro-desc{
+  font-size:14px;line-height:2;color:var(--muted);
+  margin:0;letter-spacing:.02em;
+}
+.intro-bottom{flex:0 0 auto;}
+.footnote{
+  text-align:center;font-size:11px;letter-spacing:.16em;
+  color:rgba(156,141,136,.7);margin:16px 0 0;
+}
+
+.btn-primary{
+  position:relative;width:100%;height:56px;
+  border:none;border-radius:30px;
+  background:linear-gradient(120deg,#332825,#4A3B37 55%,#3A2D2A);
+  color:#FBF6F2;font-size:15.5px;font-family:inherit;
+  letter-spacing:.14em;font-weight:500;
+  box-shadow:0 18px 34px -16px rgba(46,37,35,.6), 0 2px 6px rgba(46,37,35,.08);
+  transition:transform .28s var(--ease), box-shadow .28s var(--ease);
+  overflow:hidden;
+}
+.btn-primary::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%);
+  transform:translateX(-130%);
+  animation:sweep 3.6s ease-in-out 1.2s infinite;
+}
+@keyframes sweep{0%,70%{transform:translateX(-130%);}100%{transform:translateX(130%);}}
+.btn-primary:active{transform:scale(.972);box-shadow:0 10px 22px -14px rgba(46,37,35,.55);}
+
+.quiz-head{flex:0 0 auto;}
+.counter{
+  display:flex;align-items:baseline;gap:4px;
+  font-size:12px;letter-spacing:.14em;color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+.counter #qIndex{font-size:16px;color:var(--ink);font-weight:600;letter-spacing:.06em;}
+.counter .slash{opacity:.4;}
+.progress{
+  height:2px;border-radius:2px;margin-top:14px;
+  background:rgba(46,37,35,.07);overflow:hidden;
+}
+.progress-fill{
+  height:100%;width:0;border-radius:2px;
+  background:linear-gradient(90deg,var(--rose),var(--gold));
+  transition:width .7s var(--ease);
+}
+
+.q-wrap{
+  flex:1;display:flex;flex-direction:column;min-height:0;
+  transition:opacity .28s ease, transform .28s ease;
+}
+.q-wrap.fading{opacity:0;transform:translateY(10px);}
+
+.q-body{
+  flex:0 0 auto;height:128px;
+  display:flex;align-items:center;padding:0 2px;
+}
+.q-title{
+  font-family:"Songti SC","STSong","Noto Serif SC",Georgia,serif;
+  font-size:22px;line-height:1.52;font-weight:600;
+  letter-spacing:.015em;margin:0;
+}
+
+.options{
+  flex:1;display:flex;flex-direction:column;
+  justify-content:center;gap:12px;
+}
+
+.option{
+  position:relative;width:100%;height:64px;
+  display:flex;align-items:center;gap:14px;
+  padding:0 20px;
+  border-radius:19px;
+  background:var(--card);
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 12px 26px -18px rgba(46,37,35,.38), 0 1px 2px rgba(46,37,35,.03);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  font-family:inherit;font-size:14.5px;line-height:1.42;
+  color:var(--ink);text-align:left;
+  cursor:pointer;overflow:hidden;
+  transition:opacity .32s ease, transform .32s var(--ease),
+             background .32s ease, border-color .32s ease, box-shadow .32s ease;
+  will-change:transform;
+}
+.option .txt{flex:1;min-width:0;}
+.option .dot{
+  flex:0 0 auto;position:relative;
+  width:17px;height:17px;border-radius:50%;
+  border:1.5px solid rgba(46,37,35,.22);
+  transition:border-color .3s ease, background .3s ease, box-shadow .3s ease;
+}
+.option .dot::after{
+  content:'';position:absolute;inset:3px;border-radius:50%;
+  background:#fff;transform:scale(0);
+  transition:transform .34s cubic-bezier(.22,1.5,.4,1);
+}
+.option::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.85) 50%,transparent 70%);
+  transform:translateX(-130%);
+}
+
+.option.dim{opacity:.34;transform:scale(.985);}
+
+.option.selected{
+  background:linear-gradient(135deg,rgba(217,140,147,.20),rgba(201,166,107,.17));
+  border-color:rgba(217,140,147,.55);
+  box-shadow:0 0 0 1px rgba(217,140,147,.22),
+             0 18px 32px -18px rgba(180,101,111,.75);
+  animation:pop .55s cubic-bezier(.22,1.4,.4,1);
+}
+.option.selected::before{animation:shine .85s ease forwards;}
+.option.selected .dot{
+  border-color:transparent;
+  background:linear-gradient(135deg,var(--rose),var(--gold));
+  box-shadow:0 0 0 4px rgba(217,140,147,.15);
+}
+.option.selected .dot::after{transform:scale(1);}
+
+@keyframes pop{0%{transform:scale(1);}42%{transform:scale(1.024);}100%{transform:scale(1);}}
+@keyframes shine{to{transform:translateX(130%);}}
+
+.quiz-foot{
+  flex:0 0 auto;height:38px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;letter-spacing:.2em;
+  color:rgba(156,141,136,.75);
+}
+
+.result-wrap{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding-bottom:16px;
+}
+.ring{
+  position:relative;
+  width:138px;height:138px;border-radius:50%;
+  margin:26px 0 28px;
+  display:grid;place-items:center;
+  background:conic-gradient(from -90deg,
+      #D98C93 0%,
+      #C9A66B calc(var(--p) * 1%),
+      rgba(46,37,35,.07) calc(var(--p) * 1%),
+      rgba(46,37,35,.07) 100%);
+  transition:--p 1.5s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 20px 40px -26px rgba(180,101,111,.7);
+}
+.ring-inner{
+  position:absolute;inset:9px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 28%,#fff,#FBF6F2 72%);
+}
+.ring-num{
+  font-family:"Songti SC","STSong","Noto Serif SC",Georgia,serif;
+  font-size:38px;font-weight:600;line-height:1;letter-spacing:.02em;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(120deg,#B4656F,#C9A66B);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+}
+.ring-unit{
+  margin-top:6px;font-size:10px;letter-spacing:.22em;
+  color:var(--muted);
+}
+.result-title{
+  font-family:"Songti SC","STSong","Noto Serif SC",Georgia,serif;
+  font-size:26px;font-weight:600;letter-spacing:.03em;
+  margin:0 0 16px;
+}
+.result-desc{
+  font-size:14px;line-height:2;color:#8C7C77;
+  margin:0;max-width:302px;letter-spacing:.01em;
+}
+.result-bottom{flex:0 0 auto;}
+
+#resultScreen .result-wrap > *{opacity:0;transform:translateY(14px);}
+#resultScreen.active .result-wrap > *{
+  animation:rise .85s var(--ease) forwards;
+}
+#resultScreen.active .result-wrap > *:nth-child(1){animation-delay:.06s;}
+#resultScreen.active .result-wrap > *:nth-child(2){animation-delay:.14s;}
+#resultScreen.active .result-wrap > *:nth-child(3){animation-delay:.42s;}
+#resultScreen.active .result-wrap > *:nth-child(4){animation-delay:.52s;}
+#resultScreen.active .result-bottom{animation:rise .85s var(--ease) .62s forwards;opacity:0;transform:translateY(14px);}
+@keyframes rise{to{opacity:1;transform:translateY(0);}}
+
+@media (max-height:700px){
+  .q-body{height:106px;}
+  .q-title{font-size:20px;}
+  .option{height:58px;font-size:14px;border-radius:17px;}
+  .options{gap:10px;}
+  .ring{width:118px;height:118px;margin:20px 0 22px;}
+  .ring-num{font-size:32px;}
+  .result-title{font-size:23px;}
+  .result-desc{font-size:13.5px;line-height:1.9;}
+  .quiz-foot{height:30px;}
+}
+@media (max-height:600px){
+  .q-body{height:88px;}
+  .option{height:52px;}
+  .options{gap:8px;}
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="app">
+
+  <section class="screen active" id="introScreen">
+    <div class="intro-top">
+      <div class="eyebrow">A Little Test</div>
+      <h1 class="intro-title">恋爱脑<br><em>程度测试</em></h1>
+      <div class="hairline"></div>
+      <p class="intro-desc">十道题，约两分钟<br>没有标准答案，凭第一直觉作答</p>
+    </div>
+    <div class="intro-bottom">
+      <button class="btn-primary" id="startBtn" type="button">开始测试</button>
+      <p class="footnote">仅供娱乐 · 请勿当真</p>
+    </div>
+  </section>
+
+  <section class="screen" id="quizScreen">
+    <div class="quiz-head">
+      <div class="counter">
+        <span id="qIndex">01</span>
+        <span class="slash">/</span>
+        <span id="qTotal">10</span>
+      </div>
+      <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="q-wrap" id="qWrap">
+      <div class="q-body">
+        <h2 class="q-title" id="qTitle"></h2>
+      </div>
+      <div class="options" id="options"></div>
+    </div>
+
+    <div class="quiz-foot">凭第一直觉选择</div>
+  </section>
+
+  <section class="screen" id="resultScreen">
+    <div class="result-wrap">
+      <div class="eyebrow">Your Result</div>
+
+      <div class="ring" id="ring" style="--p:0">
+        <div class="ring-inner">
+          <span class="ring-num" id="scoreNum">0</span>
+          <span class="ring-unit">恋爱脑指数</span>
+        </div>
+      </div>
+
+      <h2 class="result-title" id="resultTitle">—</h2>
+      <p class="result-desc" id="resultDesc">—</p>
+    </div>
+
+    <div class="result-bottom">
+      <button class="btn-primary" id="restartBtn" type="button">再测一次</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var questions = [
+    {
+      t: '他两个小时没回你消息，你会？',
+      o: [
+        { x: '该干嘛干嘛，忙完自然会回', s: 0 },
+        { x: '看一眼手机，然后继续手头的事', s: 1 },
+        { x: '反复翻聊天记录，想是不是说错话', s: 2 },
+        { x: '打了好几条又删掉，心一直悬着', s: 3 }
+      ]
+    },
+    {
+      t: '周末朋友约你出门，你更倾向于？',
+      o: [
+        { x: '出门走走，正好换个心情', s: 0 },
+        { x: '看情况，没什么事就去', s: 1 },
+        { x: '先问问他那天有没有安排', s: 2 },
+        { x: '不太想去，怕错过他的消息', s: 3 }
+      ]
+    },
+    {
+      t: '他随口说「你今天有点不一样」，你会？',
+      o: [
+        { x: '笑一笑，问他哪里不一样', s: 0 },
+        { x: '心里小小开心一下，就过去了', s: 1 },
+        { x: '回家照镜子琢磨了很久', s: 2 },
+        { x: '反复回想他那句话的语气，失眠', s: 3 }
+      ]
+    },
+    {
+      t: '恋爱之后，你的朋友圈会？',
+      o: [
+        { x: '还是发自己的生活，几乎没变化', s: 0 },
+        { x: '偶尔出现一点他的痕迹', s: 1 },
+        { x: '大部分内容都和他有关', s: 2 },
+        { x: '基本变成他的个人主页了', s: 3 }
+      ]
+    },
+    {
+      t: '吵架之后他先睡了，你会？',
+      o: [
+        { x: '也去睡，明天再说', s: 0 },
+        { x: '有点难受，但还能睡着', s: 1 },
+        { x: '盯着手机，等他的消息', s: 2 },
+        { x: '整夜睡不着，一直在想怎么和好', s: 3 }
+      ]
+    },
+    {
+      t: '他的爱好你完全不感兴趣，你会？',
+      o: [
+        { x: '尊重彼此，各玩各的', s: 0 },
+        { x: '偶尔陪他玩一次', s: 1 },
+        { x: '主动去了解，想有共同话题', s: 2 },
+        { x: '把他的爱好变成自己的爱好', s: 3 }
+      ]
+    },
+    {
+      t: '你手机相册里最近的照片是？',
+      o: [
+        { x: '风景、美食、自拍都有', s: 0 },
+        { x: '生活碎片为主', s: 1 },
+        { x: '有不少他的照片和截图', s: 2 },
+        { x: '几乎全是聊天截图和他的照片', s: 3 }
+      ]
+    },
+    {
+      t: '一个重要机会和他的约会撞了，你会？',
+      o: [
+        { x: '说明情况，约会改到下次', s: 0 },
+        { x: '看哪个更重要再决定', s: 1 },
+        { x: '犹豫很久，最后还是选了他', s: 2 },
+        { x: '想都不想，机会以后还会有', s: 3 }
+      ]
+    },
+    {
+      t: '他今天心情不好，你会？',
+      o: [
+        { x: '问一句，然后给他空间', s: 0 },
+        { x: '安静地陪着他，不多问', s: 1 },
+        { x: '想尽办法逗他开心', s: 2 },
+        { x: '一整天都在担心，自己的事也做不下去', s: 3 }
+      ]
+    },
+    {
+      t: '如果有一天你们分开了，你觉得？',
+      o: [
+        { x: '会难过，但生活照常继续', s: 0 },
+        { x: '需要一段时间，但会走出来', s: 1 },
+        { x: '可能很久都缓不过来', s: 2 },
+        { x: '不敢想，感觉世界会塌掉', s: 3 }
+      ]
+    }
+  ];
+
+  var bands = [
+    {
+      max: 6,
+      name: '清醒系恋人',
+      desc: '你不是不心动，只是不会把整个人生押给心动。爱得清楚，也留得住自己——你的世界里有他，但不止有他。'
+    },
+    {
+      max: 14,
+      name: '微醺式心动',
+      desc: '你会在深夜里反复看一条消息，也会在第二天照常起床、照常发光。这份喜欢刚刚好，甜得动人，也留有余地。'
+    },
+    {
+      max: 22,
+      name: '上头体质',
+      desc: '一旦喜欢上谁，你的情绪就归他管了。你愿意为一个人改计划、改心情，甚至改掉自己。这份赤诚很珍贵，但记得留一部分给自己。'
+    },
+    {
+      max: 30,
+      name: '恋爱脑本脑',
+      desc: '你的爱是一场全力以赴的奔赴，他的一句话能点亮你一整天。你值得被同样用力地爱着——但在那之前，先学会把自己放在第一位。'
+    }
+  ];
+
+  var qIndexEl    = document.getElementById('qIndex');
+  var qTotalEl    = document.getElementById('qTotal');
+  var progressEl  = document.getElementById('progressFill');
+  var qTitleEl    = document.getElementById('qTitle');
+  var optionsEl   = document.getElementById('options');
+  var qWrap       = document.getElementById('qWrap');
+
+  var ringEl      = document.getElementById('ring');
+  var scoreNumEl  = document.getElementById('scoreNum');
+  var resultTitle = document.getElementById('resultTitle');
+  var resultDesc  = document.getElementById('resultDesc');
+
+  var TOTAL = questions.length;
+  var answers = [];
+  var locked = false;
+
+  qTotalEl.textContent = String(TOTAL).padStart(2, '0');
+
+  function showScreen(id) {
+    var list = document.querySelectorAll('.screen');
+    for (var i = 0; i < list.length; i++) {
+      list[i].classList.toggle('active', list[i].id === id);
+    }
+  }
+
+  function animateNumber(el, from, to, dur) {
+    var start = null;
+    function tick(now) {
+      if (start === null) start = now;
+      var t = Math.min((now - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = Math.round(from + (to - from) * eased);
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function renderQuestion(i) {
+    var q = questions[i];
+
+    qIndexEl.textContent = String(i + 1).padStart(2, '0');
+    progressEl.style.width = ((i + 1) / TOTAL * 100) + '%';
+    qTitleEl.textContent = q.t;
+
+    optionsEl.innerHTML = '';
+
+    for (var k = 0; k < q.o.length; k++) {
+      (function (opt, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'option';
+
+        var dot = document.createElement('span');
+        dot.className = 'dot';
+
+        var txt = document.createElement('span');
+        txt.className = 'txt';
+        txt.textContent = opt.x;
+
+        btn.appendChild(dot);
+        btn.appendChild(txt);
+
+        btn.addEventListener('click', function () {
+          pick(btn, opt.s, i);
+        });
+
+        optionsEl.appendChild(btn);
+      })(q.o[k], k);
+    }
+
+    qWrap.classList.remove('fading');
+  }
+
+  function pick(btn, score, qi) {
+    if (locked) return;
+    locked = true;
+
+    btn.classList.add('selected');
+
+    var siblings = optionsEl.children;
+    for (var i = 0; i < siblings.length; i++) {
+      if (siblings[i] !== btn) siblings[i].classList.add('dim');
+    }
+
+    answers[qi] = score;
+
+    setTimeout(function () {
+      if (qi + 1 < TOTAL) {
+        qWrap.classList.add('fading');
+        setTimeout(function () {
+          renderQuestion(qi + 1);
+          locked = false;
+        }, 290);
+      } else {
+        progressEl.style.width = '100%';
+        finish();
+        locked = false;
+      }
+    }, 440);
+  }
+
+  function finish() {
+    var total = 0;
+    for (var i = 0; i < answers.length; i++) total += (answers[i] || 0);
+
+    var maxScore = TOTAL * 3;
+    var pct = Math.round(total / maxScore * 100);
+    if (pct > 100) pct = 100;
+    if (pct < 0) pct = 0;
+
+    var band = bands[bands.length - 1];
+    for (var b = 0; b < bands.length; b++) {
+      if (total <= bands[b].max) { band = bands[b]; break; }
+    }
+
+    resultTitle.textContent = band.name;
+    resultDesc.textContent = band.desc;
+
+    ringEl.style.setProperty('--p', 0);
+    scoreNumEl.textContent = '0';
+
+    showScreen('resultScreen');
+
+    setTimeout(function () {
+      ringEl.style.setProperty('--p', pct);
+      animateNumber(scoreNumEl, 0, pct, 1300);
+    }, 420);
+  }
+
+  function startTest() {
+    answers = [];
+    locked = false;
+    progressEl.style.width = '0%';
+    renderQuestion(0);
+    showScreen('quizScreen');
+  }
+
+  document.getElementById('startBtn').addEventListener('click', startTest);
+
+  document.getElementById('restartBtn').addEventListener('click', function () {
+    answers = [];
+    locked = false;
+    ringEl.style.setProperty('--p', 0);
+    scoreNumEl.textContent = '0';
+    showScreen('introScreen');
+  });
+
+  document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+  var lastTouch = 0;
+  document.addEventListener('touchend', function (e) {
+    var now = Date.now();
+    if (now - lastTouch <= 300) e.preventDefault();
+    lastTouch = now;
+  }, { passive: false });
+
+})();
+</script>
+</body>
+</html>
